@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clfl-core-library"
+version = "0.0.1"
+description = "CLFL Shared utilities for Drive, Sheets, and Shipment Operations"
+requires-python = ">=3.10"
+dependencies = [
+    "google-auth>=2.48.0",
+    "google-api-python-client>=2.0.0",
+    "gspread>=6.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
