@@ -1,5 +1,9 @@
 from googleapiclient.discovery import build
 from .shipment_utils import extract_year_from_shipment
+import io
+from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.errors import HttpError
+import logging
 
 class DriveManager:
     """
@@ -71,3 +75,27 @@ class DriveManager:
             supportsAllDrives=True
         ).execute()
         return results.get('files', [])
+
+    def download_file_content(self, file_id: str) -> bytes:
+        """
+        Download the raw content of a file from Google Drive. 
+        Returns bytes that can be base64 encoded for Gemini API input.
+        """
+
+        try:
+            request = self.service.files().get_media(fileId=file_id)
+            file = io.BytesIO()
+            downloader = MediaIoBaseDownload(file, request)
+            done = False
+
+            while done is False:
+                status, done = downloader.next_chunk()
+                if status:
+                    logging.info(f"Download progress: {int(status.progress() * 100)}%")
+            
+        except HttpError as error:
+            logging.error(f"An error occurred: {error}")
+            return None
+
+
+        return file.getvalue()
