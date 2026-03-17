@@ -6,8 +6,20 @@ Shared Python utilities for Cargo Line projects.
 
 ### From Artifact Registry (after publishing):
 ```bash
-  pip install clfl-core-library --index-url https://us-central1-python.pkg.dev/clfl-core-library/clfl-packages/simple/
+pip install clfl-core-library --index-url https://us-central1-python.pkg.dev/clfl-core-library/clfl-packages/simple/
 ```
+
+### Upgrading to a new version:
+
+> **Note:** Use `--no-deps` to avoid pip dependency resolution errors on Python 3.14+. Always pin the version explicitly.
+
+```bash
+pip install --upgrade clfl-core-library==<version> --no-deps --index-url https://us-central1-python.pkg.dev/clfl-core-library/clfl-packages/simple/
+```
+
+When prompted:
+- **Username:** `oauth2accesstoken`
+- **Password:** output of `gcloud auth print-access-token`
 
 ### Local Development:
 ```bash
