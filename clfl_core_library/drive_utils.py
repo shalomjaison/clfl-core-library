@@ -30,7 +30,7 @@ class DriveManager:
     def find_shipment_folder(self, shipment_number: str) -> dict | None:
         """
         Find the folder for the given shipment number in the appropriate shared drive.
-        Returns the folder dict {id, name} if exactly one match is found, else None.
+        Returns the folder dict {id, name, shared_drive_id} if exactly one match is found, else None.
         """
         year = extract_year_from_shipment(shipment_number)
         drive_id = self.get_shared_drive_by_year(year)
@@ -53,19 +53,18 @@ class DriveManager:
 
         folders = results.get('files', [])
         if len(folders) == 1:
-            return folders[0]
+            return {**folders[0], 'shared_drive_id': drive_id}
         return None  # 0 = not found, >1 = ambiguous — send to review
 
-    def list_invoice_files(self, folder_id: str, drive_id: str) -> list[dict]:
+    def list_shipment_files(self, folder_id: str, drive_id: str) -> list[dict]:
         """
-        List all PDF/JPEG/PNG files in the given folder (candidate invoice documents).
+        Lists ALL files in a shipment folder.
+        Returns file metadata: id, name, mimeType.
         """
         query = (
             f"'{folder_id}' in parents and trashed = false "
-            "and (mimeType = 'application/pdf' "
-            "or mimeType = 'image/jpeg' "
-            "or mimeType = 'image/png')"
         )
+        
         results = self.service.files().list(
             q=query,
             corpora='drive',

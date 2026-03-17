@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clfl-core-library"
-version = "0.0.2"
+version = "0.0.3"
 description = "CLFL Shared utilities for Drive, Sheets, and Shipment Operations"
 requires-python = ">=3.10"
 dependencies = [
