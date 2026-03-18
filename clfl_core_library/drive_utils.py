@@ -61,21 +61,28 @@ class DriveManager:
         Lists ALL files in a shipment folder.
         Returns file metadata: id, name, mimeType.
         """
-        query = (
-            f"'{folder_id}' in parents and trashed = false "
-        )
-        
-        results = self.service.files().list(
-            q=query,
-            corpora='drive',
-            driveId=drive_id,
-            fields='files(id, name, mimeType), nextPageToken',
-            includeItemsFromAllDrives=True,
-            supportsAllDrives=True
-        ).execute()
-        return results.get('files', [])
+        query = f"'{folder_id}' in parents and trashed = false"
+        all_files = []
+        page_token = None
 
-    def download_file_content(self, file_id: str) -> bytes:
+        while True:
+            results = self.service.files().list(
+                q=query,
+                corpora='drive',
+                driveId=drive_id,
+                fields='files(id, name, mimeType), nextPageToken',
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True,
+                pageToken=page_token
+            ).execute()
+            all_files.extend(results.get('files', []))
+            page_token = results.get('nextPageToken')
+            if not page_token:
+                break
+
+        return all_files
+
+    def download_file_content(self, file_id: str) -> bytes | None:
         """
         Download the raw content of a file from Google Drive. 
         Returns bytes that can be base64 encoded for Gemini API input.
@@ -98,3 +105,26 @@ class DriveManager:
 
 
         return file.getvalue()
+    
+    def create_file_in_folder(self, folder_id: str, title: str, mime_type: str) -> str:
+        """
+        Creates an empty file with specified MIME type in folder.
+        """
+        file_metadata = {"name": title, "parents": [folder_id], "mimeType": mime_type}
+        return self.service.files().create(body=file_metadata, fields="id").execute().get("id")
+
+    def move_file_to_folder(self, file_id: str, folder_id: str):
+        """
+        Moves an existing file into a folder.
+        """
+        # Get current parents
+        file = self.service.files().get(fileId=file_id, fields='parents').execute()
+        previous_parents = ",".join(file.get('parents', []))
+        
+        # Move to new folder
+        self.service.files().update(
+            fileId=file_id,
+            addParents=folder_id,
+            removeParents=previous_parents,
+            fields='id, parents'
+        ).execute()
