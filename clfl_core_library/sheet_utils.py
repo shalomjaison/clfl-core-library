@@ -5,26 +5,6 @@ class SheetsManager:
     def __init__(self, credentials):
         self.sheets_service = build("sheets", "v4", credentials=credentials)
 
-    def create_spreadsheet(self, title: str, initial_data: list = None) -> str:
-        """
-        Creates a new Google Spreadsheet.
-        Returns: {"spreadsheet_id": "...", "spreadsheet_url": "..."}
-        """
-        body = {"properties": {"title": title}}
-        
-        # Optionally add initial sheets/data
-        if initial_data:
-            body["sheets"] = [{
-                "properties": {"title": "Sheet1"},
-                "data": [{"rowData": initial_data}]
-            }]
-        
-        result = self.sheets_service.spreadsheets().create(body=body).execute()
-        return {
-            "spreadsheet_id": result["spreadsheetId"],
-            "spreadsheet_url": result["spreadsheetUrl"]
-        }
-
     def append_rows(self, spreadsheet_id: str, range: str, values: list):
         """
         Appends rows of values to the specified range in a spreadsheet.

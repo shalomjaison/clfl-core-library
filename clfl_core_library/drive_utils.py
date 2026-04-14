@@ -128,3 +128,28 @@ class DriveManager:
             removeParents=previous_parents,
             fields='id, parents'
         ).execute()
+    
+    def create_spreadsheet(self, title: str, folder_id: str = None) -> dict:
+        """
+        Creates a new Google Spreadsheet via Drive API (bypasses Sheets API permission restriction).
+        If folder_id provided, places it directly in that folder.
+        Returns {spreadsheet_id, spreadsheet_url}
+        """
+        file_metadata = {
+            'name': title,
+            'mimeType': 'application/vnd.google-apps.spreadsheet',
+        }
+        
+        if folder_id:
+            file_metadata['parents'] = [folder_id]
+        
+        result = self.service.files().create(
+            body=file_metadata,
+            fields='id, webViewLink',
+            supportsAllDrives=True,
+        ).execute()
+
+        return {
+            "spreadsheet_id": result["id"],
+            "spreadsheet_url": result["webViewLink"]
+        }
