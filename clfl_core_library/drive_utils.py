@@ -82,14 +82,32 @@ class DriveManager:
 
         return all_files
 
-    def download_file_content(self, file_id: str) -> bytes | None:
+    def download_file_content(self, file_id: str, file_mime_type: str) -> bytes | None:
         """
         Download the raw content of a file from Google Drive. 
+        Uses export_media for Google Workspace files.
+        Uses get_media for other file types.
         Returns bytes that can be base64 encoded for Gemini API input.
         """
 
+        GOOGLE_EXPORT_TYPES = {
+            "application/vnd.google-apps.spreadsheet": (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".xlsx"
+            ),
+            "application/vnd.google-apps.document": (
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ".docx"
+            ),
+        }
+
         try:
-            request = self.service.files().get_media(fileId=file_id)
+            if file_mime_type in GOOGLE_EXPORT_TYPES:
+                export_mime_type, _ = GOOGLE_EXPORT_TYPES[file_mime_type]
+                request = self.service.files().export_media(fileId=file_id, mimeType=export_mime_type)
+            else:
+                request = self.service.files().get_media(fileId=file_id)
+            
             file = io.BytesIO()
             downloader = MediaIoBaseDownload(file, request)
             done = False
@@ -99,12 +117,13 @@ class DriveManager:
                 if status:
                     logging.info(f"Download progress: {int(status.progress() * 100)}%")
             
+            return file.getvalue()
+            
         except HttpError as error:
-            logging.error(f"An error occurred: {error}")
+            logging.error(f"Smart download failed for file {file_id}: {error}")
             return None
 
 
-        return file.getvalue()
     
     def create_file_in_folder(self, folder_id: str, title: str, mime_type: str) -> str:
         """
